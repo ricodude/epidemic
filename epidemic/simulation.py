@@ -2,7 +2,7 @@ import enum
 import math
 import random
 
-INFECTION_DISTANCE = 0.05
+INFECTION_DISTANCE = 0.03
 INFECTION_DURATION = 14
 INFECTION_PROBABILITY = 0.25
 MOVE_DISTANCE = 0.01
@@ -118,27 +118,6 @@ class Region:
             pos_list.append(ind.get_position())
         return pos_list
 
-    def get_all_susceptible(self):
-        pos_list = []
-        for ind in self._population:
-            if ind.is_susceptible():
-                pos_list.append(ind.get_position())
-        return pos_list
-
-    def get_all_infected(self):
-        pos_list = []
-        for ind in self._population:
-            if ind.is_infected():
-                pos_list.append(ind.get_position())
-        return pos_list
-
-    def get_all_removed(self):
-        pos_list = []
-        for ind in self._population:
-            if ind.is_removed():
-                pos_list.append(ind.get_position())
-        return pos_list
-
     def get_population(self):
         return self._population
 
@@ -166,12 +145,3 @@ class Simulation:
 
     def get_all_positions(self):
         return self._region.get_all_positions()
-
-    def get_all_infected(self):
-        return self._region.get_all_infected()
-
-    def get_all_removed(self):
-        return self._region.get_all_removed()
-
-    def get_all_susceptible(self):
-        return self._region.get_all_susceptible()
