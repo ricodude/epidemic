@@ -4,7 +4,7 @@ import random
 
 INFECTION_DISTANCE = 0.03
 INFECTION_DURATION = 14
-INFECTION_PROBABILITY = 0.25
+INFECTION_PROBABILITY = 0.2
 MOVE_DISTANCE = 0.01
 
 SQ_INFECTION_DISTANCE = INFECTION_DISTANCE ** 2
@@ -71,6 +71,9 @@ class Individual:
     def get_position(self):
         return self._x_pos, self._y_pos
 
+    def get_state(self):
+        return self._state
+
     def get_susceptible_neighbours(self):
         neighbours = []
         for ind in self._region.get_population():
@@ -87,10 +90,8 @@ class Region:
         self._population = []
         # Add one infected individual
         self._population.append(Individual(self, state=State.INFECTED))
-        # Add one removed individual
-        self._population.append(Individual(self, state=State.REMOVED))
         # Rest are uninfected
-        for _ in range(num_individuals - 2):
+        for _ in range(num_individuals - 1):
             self._population.append(Individual(self))
 
     def remove(self):
@@ -105,13 +106,6 @@ class Region:
         for ind in self._population:
             ind.move()
 
-    def get_positions_for_state(self, state):
-        pos_list = []
-        for ind in self._population:
-            if ind.is_in_state(state):
-                pos_list.append(ind.get_position())
-        return pos_list
-
     def get_all_positions(self):
         pos_list = []
         for ind in self._population:
@@ -120,6 +114,21 @@ class Region:
 
     def get_population(self):
         return self._population
+
+    def get_positions_for_state(self, state):
+        pos_list = []
+        for ind in self._population:
+            if ind.is_in_state(state):
+                pos_list.append(ind.get_position())
+        return pos_list
+
+    def get_state_counts(self):
+        counts = {}
+        for state in State:
+            counts[state] = 0
+        for ind in self._population:
+            counts[ind.get_state()] += 1
+        return counts
 
 
 class Simulation:
@@ -140,8 +149,14 @@ class Simulation:
     def move(self):
         self._region.move()
 
+    def get_all_positions(self):
+        return self._region.get_all_positions()
+
+    def get_population_size(self):
+        return len(self._region.get_population())
+
     def get_positions_for_state(self, state):
         return self._region.get_positions_for_state(state)
 
-    def get_all_positions(self):
-        return self._region.get_all_positions()
+    def get_state_counts(self):
+        return self._region.get_state_counts()

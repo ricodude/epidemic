@@ -16,21 +16,11 @@ class TestSimulation(unittest.TestCase):
 
     def test_many_steps(self):
         # GIVEN
-        simul = es.Simulation(1000)
+        simul = es.Simulation(100)
 
         # WHEN
         for _ in range(1000):
             simul.step()
-
-        # THEN
-        self.assertTrue(True)
-
-    def test_plot(self):
-        # GIVEN
-        simul = es.Simulation(1000)
-
-        # WHEN
-        simul.plot()
 
         # THEN
         self.assertTrue(True)
