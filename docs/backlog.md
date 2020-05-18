@@ -8,3 +8,4 @@
 - Add self-isolation
 - Add quarantining
 - Implement dynamic policies - e.g. start self-isolation after X cases
+- Add SimRecorder - that records the simulation as it runs (at speed), generates a SimHistory and can then be plotted later
