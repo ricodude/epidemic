@@ -3,6 +3,9 @@ import numpy as np
 
 import epidemic.simulation as es
 
+SIM_PLOT_WIDTH = 12
+SIM_PLOT_HEIGHT = 4
+
 STATE_COLORS = {
     es.State.INFECTED: 'red',
     es.State.REMOVED: 'gray',
@@ -11,18 +14,15 @@ STATE_COLORS = {
 INITIAL_LINE_RANGE = 100
 
 
-class SimPlotter:
-    def __init__(self, sim, pause=0.1):
+class SimAxesPlotter:
+    def __init__(self, sim, fig, y_scale, y_offset):
         self._sim = sim
-        self._pause = pause
-        plt.ion()
-        self._fig = plt.figure(figsize=(15, 5))
 
-        self._ax_scatter = self._fig.add_axes([0.03, 0.1, 0.27, 0.8])
+        self._ax_scatter = fig.add_axes([0.03, 0.1 * y_scale + y_offset, 0.27, 0.8 * y_scale])
         self._ax_scatter.set_xlim(0, 1)
         self._ax_scatter.set_ylim(0, 1)
 
-        self._ax_line = self._fig.add_axes([0.35, 0.1, 0.63, 0.8])
+        self._ax_line = fig.add_axes([0.35, 0.1 * y_scale + y_offset, 0.63, 0.8 * y_scale])
         self._ax_line.set_xlim(0, INITIAL_LINE_RANGE)
         self._ax_line.set_ylim(0, sim.get_population_size())
 
@@ -35,19 +35,8 @@ class SimPlotter:
 
         self._state_scatters = {}
 
-        self.plot()
-
-    def run(self, num_steps=None):
-        step = 0
-        self.plot()
-        while num_steps is None or step < num_steps:
-            plt.pause(self._pause)
-            self.step()
-            step += 1
-
     def step(self):
         self._sim.step()
-        self.plot()
 
     def plot(self):
         for state in es.State:
@@ -88,3 +77,46 @@ class SimPlotter:
 
         line.set_xdata(x_vals)
         line.set_ydata(y_vals)
+
+
+class SimPlotter:
+    def __init__(self, sim_or_sim_list):
+        if hasattr(sim_or_sim_list, '__iter__'):
+            self._sim_list = sim_or_sim_list
+        else:
+            self._sim_list = [sim_or_sim_list]
+
+        plt.ion()
+
+        num_sims = len(self._sim_list)
+        if num_sims <= 3:
+            fig_width = SIM_PLOT_WIDTH
+            fig_height = num_sims * SIM_PLOT_HEIGHT
+        else:
+            fig_width = SIM_PLOT_WIDTH * 3 / num_sims
+            fig_height = 3 * SIM_PLOT_HEIGHT
+
+        self._fig = plt.figure(figsize=(fig_width, fig_height))
+
+        self._sap_list = []
+        y_scale = 1 / num_sims
+        for i, sim in enumerate(self._sim_list):
+            self._sap_list.append(SimAxesPlotter(sim, fig=self._fig, y_scale=y_scale, y_offset=i * y_scale))
+
+        self.plot()
+
+    def run(self, num_steps=None, pause=0.1):
+        step = 0
+        while num_steps is None or step < num_steps:
+            plt.pause(pause)
+            self.step()
+            step += 1
+
+    def step(self):
+        for sap in self._sap_list:
+            sap.step()
+        self.plot()
+
+    def plot(self):
+        for sap in self._sap_list:
+            sap.plot()

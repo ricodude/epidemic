@@ -16,7 +16,7 @@ class TestSimulation(unittest.TestCase):
         # THEN
         self.assertTrue(True)
 
-    def test_10_plots(self):
+    def test_10_steps(self):
         # GIVEN
         sim = es.Simulation(1000)
         plotter = ep.SimPlotter(sim)
@@ -27,13 +27,35 @@ class TestSimulation(unittest.TestCase):
         # THEN
         self.assertTrue(True)
 
-    def test_100_plots(self):
+    def test_2_sims(self):
         # GIVEN
-        sim = es.Simulation(100)
-        plotter = ep.SimPlotter(sim, pause=0.01)
+        sim_list = [es.Simulation(100) for _ in range(2)]
+        plotter = ep.SimPlotter(sim_list)
 
         # WHEN
-        plotter.run(num_steps=100)
+        plotter.run(num_steps=10)
+
+        # THEN
+        self.assertTrue(True)
+
+    def test_3_sims(self):
+        # GIVEN
+        sim_list = [es.Simulation(100) for _ in range(3)]
+        plotter = ep.SimPlotter(sim_list)
+
+        # WHEN
+        plotter.run(num_steps=10)
+
+        # THEN
+        self.assertTrue(True)
+
+    def test_4_sims(self):
+        # GIVEN
+        sim_list = [es.Simulation(100) for _ in range(4)]
+        plotter = ep.SimPlotter(sim_list)
+
+        # WHEN
+        plotter.run(num_steps=10)
 
         # THEN
         self.assertTrue(True)
