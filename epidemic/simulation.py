@@ -2,13 +2,6 @@ import enum
 import math
 import random
 
-INFECTION_DISTANCE = 0.03
-INFECTION_DURATION = 14
-INFECTION_PROBABILITY = 0.2
-MOVE_DISTANCE = 0.01
-
-SQ_INFECTION_DISTANCE = INFECTION_DISTANCE ** 2
-
 
 def constrain(val, min_val, max_val):
     if val < min_val:
@@ -26,7 +19,9 @@ class State(enum.Enum):
 
 
 class Individual:
-    def __init__(self, region, state=None):
+    def __init__(self, region, params, state=None):
+        self._params = params
+        self._sq_inf_dist = self._params['inf_dist'] ** 2
         self._region = region
         if state is None:
             self._state = State.SUSCEPTIBLE
@@ -39,19 +34,19 @@ class Individual:
     def remove(self):
         if self.is_infected():
             self._duration += 1
-            if self._duration > INFECTION_DURATION:
+            if self._duration > self._params['inf_dur']:
                 self._state = State.REMOVED
 
     def infect(self):
         if self.is_infected() and self._duration > 0:
             for ind in self.get_susceptible_neighbours():
-                if ind.is_susceptible() and random.random() <= INFECTION_PROBABILITY:
+                if ind.is_susceptible() and random.random() <= self._params['inf_prob']:
                     ind.set_infected()
 
     def move(self):
         theta = 2 * math.pi * random.random()
-        self._x_pos = constrain(self._x_pos + math.sin(theta) / 100, 0, 1)
-        self._y_pos = constrain(self._y_pos + math.cos(theta) / 100, 0, 1)
+        self._x_pos = constrain(self._x_pos + math.sin(theta) * self._params['move_dist'], 0, 1)
+        self._y_pos = constrain(self._y_pos + math.cos(theta) * self._params['move_dist'], 0, 1)
 
     def is_infected(self):
         return self._state == State.INFECTED
@@ -77,7 +72,7 @@ class Individual:
     def get_susceptible_neighbours(self):
         neighbours = []
         for ind in self._region.get_population():
-            if ind != self and ind.is_susceptible() and self.sq_dist_from(ind) <= SQ_INFECTION_DISTANCE:
+            if ind != self and ind.is_susceptible() and self.sq_dist_from(ind) <= self._sq_inf_dist:
                 neighbours.append(ind)
         return neighbours
 
@@ -86,13 +81,14 @@ class Individual:
 
 
 class Region:
-    def __init__(self, num_individuals):
+    def __init__(self, num_individuals, params):
+        self._params = params
         self._population = []
         # Add one infected individual
-        self._population.append(Individual(self, state=State.INFECTED))
+        self._population.append(Individual(self, state=State.INFECTED, params=params))
         # Rest are uninfected
         for _ in range(num_individuals - 1):
-            self._population.append(Individual(self))
+            self._population.append(Individual(self, params=params))
 
     def remove(self):
         for ind in self._population:
@@ -132,8 +128,19 @@ class Region:
 
 
 class Simulation:
-    def __init__(self, num_individuals):
-        self._region = Region(num_individuals)
+    DEFAULT_PARAMS = {
+        'inf_dist': 0.03,
+        'inf_dur': 14,
+        'inf_prob': 0.2,
+        'move_dist': 0.01,
+    }
+
+    def __init__(self, num_individuals, params=None):
+        self._params = DEFAULT_PARAMS
+        if params is not None:
+            for k, v in params.items():
+                self._params[k] = v
+        self._region = Region(num_individuals, params=self._params)
 
     def step(self):
         self.remove()

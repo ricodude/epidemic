@@ -1,5 +1,4 @@
 # Backlog
-- All parameters as arguments
 - Scale size of fonts & circles for multiple plots
 - Stack plots sideways for more than 5
 - Make simulations more efficient
