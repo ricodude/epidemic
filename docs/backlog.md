@@ -1,5 +1,5 @@
 # Backlog
-- Scale size of fonts & circles for multiple plots
+- Scale size of fonts for multiple plots
 - Stack plots sideways for more than 5
 - Make simulations more efficient
 - Remove the ticks from the region plot

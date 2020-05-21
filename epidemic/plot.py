@@ -17,6 +17,7 @@ INITIAL_LINE_RANGE = 100
 class SimAxesPlotter:
     def __init__(self, sim, fig, y_scale, y_offset):
         self._sim = sim
+        self._y_scale = y_scale
 
         self._ax_scatter = fig.add_axes([0.03, 0.1 * y_scale + y_offset, 0.27, 0.8 * y_scale])
         self._ax_scatter.set_xlim(0, 1)
@@ -63,7 +64,9 @@ class SimAxesPlotter:
                 sc = self._state_scatters.pop(state)
                 sc.remove()
         elif len(positions) > 0:
-            new_sc = self._ax_scatter.scatter(*np.array(list(zip(*positions))), c=STATE_COLORS[state], alpha=0.5)
+            new_sc = self._ax_scatter.scatter(*np.array(list(zip(*positions))),
+                                              s=36 * self._y_scale,
+                                              c=STATE_COLORS[state], alpha=0.5)
             self._state_scatters[state] = new_sc
 
     def plot_line_for_state(self, state):
