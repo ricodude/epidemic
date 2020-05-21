@@ -136,7 +136,7 @@ class Simulation:
     }
 
     def __init__(self, num_individuals, params=None):
-        self._params = DEFAULT_PARAMS
+        self._params = self.DEFAULT_PARAMS
         if params is not None:
             for k, v in params.items():
                 self._params[k] = v

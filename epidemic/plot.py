@@ -28,7 +28,8 @@ class SimAxesPlotter:
 
         self._line_values = {state: [count] for state, count in self._sim.get_state_counts().items()}
         self._line_infected, = self._ax_line.plot([0], self._line_values[es.State.INFECTED], c='red', label='Infected')
-        self._line_removed, = self._ax_line.plot([0], self._line_values[es.State.INFECTED], c='gray', label='Removed')
+        self._line_removed, = self._ax_line.plot([0], self._line_values[es.State.INFECTED], c='gray',
+                                                 label='Removed + Infected')
         self._ax_line.legend(loc='upper left')
 
         self._update_lines = True
@@ -42,11 +43,13 @@ class SimAxesPlotter:
         for state in es.State:
             self.plot_scatter_for_state(state)
 
+        state_counts = self._sim.get_state_counts()
         if self._update_lines:
-            for state, count in self._sim.get_state_counts().items():
-                self._line_values[state].append(count)
-                if state == es.State.INFECTED and count == 0:
-                    self._update_lines = False
+            self._line_values[es.State.INFECTED].append(state_counts[es.State.INFECTED])
+            self._line_values[es.State.REMOVED].append(state_counts[es.State.REMOVED] +
+                                                       state_counts[es.State.INFECTED])
+            if state_counts[es.State.INFECTED] == 0:
+                self._update_lines = False
 
             self.plot_line_for_state(es.State.INFECTED)
             self.plot_line_for_state(es.State.REMOVED)
