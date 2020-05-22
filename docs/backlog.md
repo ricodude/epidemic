@@ -1,12 +1,12 @@
 # Backlog
-- Scale size of fonts for multiple plots
-- Stack plots sideways for more than 5
 - Make simulations more efficient
-- Remove the ticks from the region plot
 - Add hub simulation
 - Add multiple regions with travel between
 - Add self-isolation
 - Add quarantining
+- Scale size of fonts for multiple plots
+- Stack plots sideways for more than 5
+- Remove the ticks from the region plot
 - Implement dynamic policies - e.g. start self-isolation after X cases
 - Add SimRecorder - that records the simulation as it runs (at speed), generates a SimHistory and can then be plotted later
 - Proper timing for pauses - i.e. from start of run.  Maybe.
