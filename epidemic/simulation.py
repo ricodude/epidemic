@@ -78,7 +78,7 @@ class Individual:
     def get_susceptible_neighbours(self):
         neighbours = []
         for ind in self._region.get_possible_neighbours(self):
-            if ind.is_susceptible() and self.sq_dist_from(ind) <= self._sq_inf_dist:
+            if ind != self and ind.is_susceptible() and self.sq_dist_from(ind) <= self._sq_inf_dist:
                 neighbours.append(ind)
         return neighbours
 
@@ -92,7 +92,7 @@ class Region:
 
         # Create a grid to optimise neighbour search
         self._grid_size = math.floor(1 / params['inf_dist'])
-        self._grid = [[set() for _ in range(self._grid_size)] for _ in range(self._grid_size)]
+        self._grid = [[[] for _ in range(self._grid_size)] for _ in range(self._grid_size)]
 
         self._population = []
         # Add one infected individual
@@ -130,15 +130,17 @@ class Region:
         return pos_list
 
     def get_possible_neighbours(self, ind):
+        if not self._params['grid_opt']:
+            return self._population
+
         grid_x_pos, grid_y_pos = self.calc_grid_pos(*ind.get_position())
         offset_range = range(-1, 2)
-        s = set()
+        neighbours = []
         for i, j in [(i, j) for i in offset_range for j in offset_range]:
             check_grid_x_pos = constrain(grid_x_pos + i, 0, self._grid_size - 1)
             check_grid_y_pos = constrain(grid_y_pos + j, 0, self._grid_size - 1)
-            s = s.union(self._grid[check_grid_x_pos][check_grid_y_pos])
-        s.remove(ind)
-        return s
+            neighbours.extend(self._grid[check_grid_x_pos][check_grid_y_pos])
+        return neighbours
 
     def get_state_counts(self):
         counts = {}
@@ -153,7 +155,7 @@ class Region:
 
     def set_grid_pos(self, ind, x_pos, y_pos):
         grid_x_pos, grid_y_pos = self.calc_grid_pos(x_pos, y_pos)
-        self._grid[grid_x_pos][grid_y_pos].add(ind)
+        self._grid[grid_x_pos][grid_y_pos].append(ind)
 
     def unset_grid_pos(self, ind, x_pos, y_pos):
         grid_x_pos = int(x_pos * self._grid_size)
@@ -165,7 +167,7 @@ class Region:
         new_grid_x_pos, new_grid_y_pos = self.calc_grid_pos(new_x_pos, new_y_pos)
         if new_grid_x_pos != old_grid_x_pos or new_grid_y_pos != old_grid_y_pos:
             self._grid[old_grid_x_pos][old_grid_y_pos].remove(ind)
-            self._grid[new_grid_x_pos][new_grid_y_pos].add(ind)
+            self._grid[new_grid_x_pos][new_grid_y_pos].append(ind)
 
 
 class Simulation:
@@ -174,6 +176,7 @@ class Simulation:
         'inf_dur': 14,
         'inf_prob': 0.2,
         'move_dist': 0.01,
+        'grid_opt': True,
     }
 
     def __init__(self, num_individuals, params=None):

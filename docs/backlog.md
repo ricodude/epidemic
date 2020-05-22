@@ -1,6 +1,6 @@
 # Backlog
 - Make simulations more efficient - IN PROGRESS
-   - Figure out why random progression not the same
+   - Measure the performance improvement
    - Try for more performance
 - Scale size of fonts for multiple plots
 - Remove the ticks from the region plot
