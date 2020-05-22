@@ -1,6 +1,8 @@
 # Backlog
+- Make simulations more efficient - IN PROGRESS
+   - Figure out why random progression not the same
+   - Try for more performance
 - Scale size of fonts for multiple plots
-- Make simulations more efficient
 - Remove the ticks from the region plot
 - Add hub simulation
 - Add multiple regions with travel between

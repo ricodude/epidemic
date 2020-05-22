@@ -31,6 +31,8 @@ class Individual:
         self._x_pos = random.random()
         self._y_pos = random.random()
 
+        region.set_grid_pos(self, x_pos=self._x_pos, y_pos=self._y_pos)
+
     def remove(self):
         if self.is_infected():
             self._duration += 1
@@ -44,9 +46,13 @@ class Individual:
                     ind.set_infected()
 
     def move(self):
+        old_x_pos = self._x_pos
+        old_y_pos = self._y_pos
         theta = 2 * math.pi * random.random()
         self._x_pos = constrain(self._x_pos + math.sin(theta) * self._params['move_dist'], 0, 1)
         self._y_pos = constrain(self._y_pos + math.cos(theta) * self._params['move_dist'], 0, 1)
+        self._region.update_grid_pos(self, old_x_pos=old_x_pos, old_y_pos=old_y_pos,
+                                     new_x_pos=self._x_pos, new_y_pos=self._y_pos)
 
     def is_infected(self):
         return self._state == State.INFECTED
@@ -71,8 +77,8 @@ class Individual:
 
     def get_susceptible_neighbours(self):
         neighbours = []
-        for ind in self._region.get_population():
-            if ind != self and ind.is_susceptible() and self.sq_dist_from(ind) <= self._sq_inf_dist:
+        for ind in self._region.get_possible_neighbours(self):
+            if ind.is_susceptible() and self.sq_dist_from(ind) <= self._sq_inf_dist:
                 neighbours.append(ind)
         return neighbours
 
@@ -83,6 +89,11 @@ class Individual:
 class Region:
     def __init__(self, num_individuals, params):
         self._params = params
+
+        # Create a grid to optimise neighbour search
+        self._grid_size = math.floor(1 / params['inf_dist'])
+        self._grid = [[set() for _ in range(self._grid_size)] for _ in range(self._grid_size)]
+
         self._population = []
         # Add one infected individual
         self._population.append(Individual(self, state=State.INFECTED, params=params))
@@ -118,6 +129,17 @@ class Region:
                 pos_list.append(ind.get_position())
         return pos_list
 
+    def get_possible_neighbours(self, ind):
+        grid_x_pos, grid_y_pos = self.calc_grid_pos(*ind.get_position())
+        offset_range = range(-1, 2)
+        s = set()
+        for i, j in [(i, j) for i in offset_range for j in offset_range]:
+            check_grid_x_pos = constrain(grid_x_pos + i, 0, self._grid_size - 1)
+            check_grid_y_pos = constrain(grid_y_pos + j, 0, self._grid_size - 1)
+            s = s.union(self._grid[check_grid_x_pos][check_grid_y_pos])
+        s.remove(ind)
+        return s
+
     def get_state_counts(self):
         counts = {}
         for state in State:
@@ -125,6 +147,25 @@ class Region:
         for ind in self._population:
             counts[ind.get_state()] += 1
         return counts
+
+    def calc_grid_pos(self, x_pos, y_pos):
+        return int(x_pos * self._grid_size), int(y_pos * self._grid_size)
+
+    def set_grid_pos(self, ind, x_pos, y_pos):
+        grid_x_pos, grid_y_pos = self.calc_grid_pos(x_pos, y_pos)
+        self._grid[grid_x_pos][grid_y_pos].add(ind)
+
+    def unset_grid_pos(self, ind, x_pos, y_pos):
+        grid_x_pos = int(x_pos * self._grid_size)
+        grid_y_pos = int(y_pos * self._grid_size)
+        self._grid[grid_x_pos][grid_y_pos].remove(ind)
+
+    def update_grid_pos(self, ind, old_x_pos, old_y_pos, new_x_pos, new_y_pos):
+        old_grid_x_pos, old_grid_y_pos = self.calc_grid_pos(old_x_pos, old_y_pos)
+        new_grid_x_pos, new_grid_y_pos = self.calc_grid_pos(new_x_pos, new_y_pos)
+        if new_grid_x_pos != old_grid_x_pos or new_grid_y_pos != old_grid_y_pos:
+            self._grid[old_grid_x_pos][old_grid_y_pos].remove(ind)
+            self._grid[new_grid_x_pos][new_grid_y_pos].add(ind)
 
 
 class Simulation:
@@ -136,6 +177,7 @@ class Simulation:
     }
 
     def __init__(self, num_individuals, params=None):
+        random.seed(0)
         self._params = self.DEFAULT_PARAMS
         if params is not None:
             for k, v in params.items():
