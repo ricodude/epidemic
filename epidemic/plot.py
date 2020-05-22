@@ -3,9 +3,6 @@ import numpy as np
 
 import epidemic.simulation as es
 
-SIM_PLOT_WIDTH = 12
-SIM_PLOT_HEIGHT = 4
-
 STATE_COLORS = {
     es.State.INFECTED: 'red',
     es.State.REMOVED: 'gray',
@@ -15,15 +12,17 @@ INITIAL_LINE_RANGE = 100
 
 
 class SimAxesPlotter:
-    def __init__(self, sim, fig, y_scale, y_offset):
+    def __init__(self, sim, fig, plot_scale, x_scale, y_scale, x_offset, y_offset):
         self._sim = sim
-        self._y_scale = y_scale
+        self._plot_scale = plot_scale
 
-        self._ax_scatter = fig.add_axes([0.03, 0.1 * y_scale + y_offset, 0.27, 0.8 * y_scale])
+        self._ax_scatter = fig.add_axes([0.03 * x_scale + x_offset, 0.1 * y_scale + y_offset,
+                                         0.27 * x_scale, 0.8 * y_scale])
         self._ax_scatter.set_xlim(0, 1)
         self._ax_scatter.set_ylim(0, 1)
 
-        self._ax_line = fig.add_axes([0.35, 0.1 * y_scale + y_offset, 0.63, 0.8 * y_scale])
+        self._ax_line = fig.add_axes([0.35 * x_scale + x_offset, 0.1 * y_scale + y_offset,
+                                      0.63 * x_scale, 0.8 * y_scale])
         self._ax_line.set_xlim(0, INITIAL_LINE_RANGE)
         self._ax_line.set_ylim(0, sim.get_population_size())
 
@@ -65,7 +64,7 @@ class SimAxesPlotter:
                 sc.remove()
         elif len(positions) > 0:
             new_sc = self._ax_scatter.scatter(*np.array(list(zip(*positions))),
-                                              s=36 * self._y_scale,
+                                              s=18 * (self._plot_scale ** 2),
                                               c=STATE_COLORS[state], alpha=0.5)
             self._state_scatters[state] = new_sc
 
@@ -86,28 +85,43 @@ class SimAxesPlotter:
 
 
 class SimPlotter:
-    def __init__(self, sim_or_sim_list):
+    SINGLE_PLOT_WIDTH = 12
+    SINGLE_PLOT_HEIGHT = 4
+    MAX_HEIGHT = 12
+    HEIGHT_STACK = 5
+
+    def __init__(self, sim_or_sim_list,
+                 single_plot_width=SINGLE_PLOT_WIDTH, single_plot_height=SINGLE_PLOT_HEIGHT,
+                 max_height=MAX_HEIGHT, height_stack=HEIGHT_STACK):
         if hasattr(sim_or_sim_list, '__iter__'):
             self._sim_list = sim_or_sim_list
         else:
             self._sim_list = [sim_or_sim_list]
 
-        plt.ion()
-
+        # Figure out how many plots high & wide - and the corresponding scaling factors
         num_sims = len(self._sim_list)
-        if num_sims <= 3:
-            fig_width = SIM_PLOT_WIDTH
-            fig_height = num_sims * SIM_PLOT_HEIGHT
-        else:
-            fig_width = SIM_PLOT_WIDTH * 3 / num_sims
-            fig_height = 3 * SIM_PLOT_HEIGHT
+        x_num = 1 + int((num_sims - 1) / height_stack)
+        x_scale = 1 / x_num
+        y_num = min(height_stack, num_sims)
+        y_scale = 1 / y_num
+
+        # Set the height & width for the figure accordingly
+        unadj_height = y_num * single_plot_height
+        fig_height = min(unadj_height, max_height)
+        plot_scale = fig_height / unadj_height
+        fig_width = x_num * single_plot_width * plot_scale
+
+        plt.ion()
 
         self._fig = plt.figure(figsize=(fig_width, fig_height))
 
         self._sap_list = []
-        y_scale = 1 / num_sims
         for i, sim in enumerate(self._sim_list):
-            self._sap_list.append(SimAxesPlotter(sim, fig=self._fig, y_scale=y_scale, y_offset=i * y_scale))
+            x_pos, y_pos = divmod(i, height_stack)
+            x_offset = x_pos * x_scale
+            y_offset = (y_num - y_pos - 1) * y_scale
+            self._sap_list.append(SimAxesPlotter(sim, fig=self._fig, plot_scale=plot_scale, x_scale=x_scale,
+                                                 y_scale=y_scale, x_offset=x_offset, y_offset=y_offset))
 
         self.plot()
 
