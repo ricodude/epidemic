@@ -181,7 +181,7 @@ class Simulation:
 
     def __init__(self, num_individuals, params=None):
         random.seed(0)
-        self._params = self.DEFAULT_PARAMS
+        self._params = self.DEFAULT_PARAMS.copy()
         if params is not None:
             for k, v in params.items():
                 self._params[k] = v
